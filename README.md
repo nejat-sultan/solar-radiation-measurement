@@ -19,7 +19,8 @@ Enables real-time exploration of data and visual insights, allowing stakeholders
 Integration of Continuous Integration/Continuous Deployment (CI/CD) pipelines to ensure smooth testing, deployment, and maintenance of the project.
 Automated testing and workflows to maintain code quality and facilitate easy updates.
 
-Technologies Used
+Technologies Used:
+
 Python for data analysis and dashboard development.
 Pandas and NumPy for data manipulation and analysis.
 Matplotlib and Seaborn for visualizing data insights.
