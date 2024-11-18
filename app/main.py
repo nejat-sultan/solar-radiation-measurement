@@ -1,49 +1,79 @@
-import streamlit as st # type: ignore
-import pandas as pd # type: ignore
+import streamlit as st  # type: ignore
+import pandas as pd  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
+import seaborn as sns  # type: ignore
 import numpy as np
+from utils import load_data  # Importing from utils
 
 st.title("Data Insights Dashboard")
 
-def load_data():
-    # Replace with actual data loading code
-    data = pd.DataFrame(
-        {
-            "Timestamp": pd.date_range(start="2021-08-09 00:01", periods=5, freq="T"),
-            "GHI": [-1.2, -1.1, -1.1, -1.1, -1.0],
-            "DNI": [-0.2, -0.2, -0.2, -0.1, -0.1],
-            "DHI": [-1.1, -1.1, -1.1, -1.0, -1.0],
-            "ModA": [0.0, 0.0, 0.0, 0.0, 0.0],
-            "ModB": [0.0, 0.0, 0.0, 0.0, 0.0],
-            "Tamb": [26.2, 26.2, 26.2, 26.2, 26.2],
-            "RH": [93.4, 93.6, 93.7, 93.3, 93.3],
-            "WS": [0.0, 0.0, 0.3, 0.2, 0.1],
-            "WSgust": [0.4, 0.0, 1.1, 0.7, 0.7],
-            "WSstdev": [0.1, 0.0, 0.5, 0.4, 0.3],
-            "WD": [122.1, 0.0, 124.6, 120.3, 113.2],
-            "WDstdev": [0.0, 0.0, 1.5, 1.3, 1.0],
-            "BP": [998, 998, 997, 997, 997],
-            "Cleaning": [0, 0, 0, 0, 0],
-            "Precipitation": [0.0, 0.0, 0.0, 0.0, 0.0],
-            "TModA": [26.3, 26.3, 26.4, 26.4, 26.4],
-            "TModB": [26.2, 26.2, 26.2, 26.3, 26.3],
-            "Comments": [None, None, None, None, None]
-        }
-    )
-    return data
+file_upload = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
 
-data = load_data()
+if file_upload:
 
-st.subheader("Dataset Overview")
-st.write(data)
+    data = load_data(file_upload)
+    
+    # Allow the user to sample the data
+    sample_size = st.sidebar.slider("Select Sample Size", min_value=100, max_value=2000, value=1000)
+    sample_data = data.sample(n=sample_size, random_state=42)  
 
-st.subheader("Adjust Visualization Range")
-range_val = st.slider("Select Range", min_value=0, max_value=len(data), value=5)
+    st.subheader("Dataset Overview (Sampled)")
+    st.write(sample_data)
 
-st.subheader("Filtered Data")
-st.write(data.head(range_val))
+    # Adjust Visualization Range
+    st.subheader("Adjust Visualization Range")
+    range_val = st.slider("Select Range", min_value=0, max_value=len(sample_data), value=5)
 
-st.subheader("Data Visualization")
-st.line_chart(data.set_index("Timestamp"))
+    # Filter and show the selected number of rows
+    st.subheader("Filtered Data")
+    st.write(sample_data.head(range_val))
 
-st.subheader("Data Statistics")
-st.write(data.describe())
+    # Data Visualization (Line chart of Timestamp vs other columns)
+    st.subheader("Data Visualization - Line Chart")
+    st.line_chart(sample_data.set_index("Timestamp"))
+
+    # Data Visualization - Bar Chart (e.g., GHI, DNI, DHI comparison)
+    st.subheader("Bar Chart - GHI, DNI, DHI Comparison")
+    bar_data = sample_data[['GHI', 'DNI', 'DHI']].mean()
+    st.bar_chart(bar_data)
+
+    # Data Visualization - Histogram (distribution of RH)
+    st.subheader("Histogram - Distribution of RH")
+    st.write("Distribution of Relative Humidity (RH) values")
+    fig, ax = plt.subplots()
+    ax.hist(sample_data['RH'], bins=10, color='skyblue', edgecolor='black')
+    ax.set_title('Histogram of RH')
+    ax.set_xlabel('Relative Humidity')
+    ax.set_ylabel('Frequency')
+    st.pyplot(fig)
+
+    # Data Visualization - Scatter Plot (GHI vs DNI)
+    st.subheader("Scatter Plot - GHI vs DNI")
+    st.write("Scatter plot showing relationship between GHI and DNI")
+    fig, ax = plt.subplots()
+    ax.scatter(sample_data['GHI'], sample_data['DNI'], color='purple')
+    ax.set_title('GHI vs DNI')
+    ax.set_xlabel('GHI')
+    ax.set_ylabel('DNI')
+    st.pyplot(fig)
+
+    # Data Visualization - Heatmap (Correlation Matrix)
+    st.subheader("Heatmap - Correlation Matrix")
+    # Select only numeric columns for correlation calculation
+    numeric_data = sample_data.select_dtypes(include=[np.number])
+
+    # Calculate correlation matrix
+    corr = numeric_data.corr()
+
+    # Plot the heatmap
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
+    st.pyplot(fig)
+
+
+    # Data Statistics (Summary statistics)
+    st.subheader("Data Statistics")
+    st.write(sample_data.describe())
+
+else:
+    st.info("Please upload a CSV file to get started.")
